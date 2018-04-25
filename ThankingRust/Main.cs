@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -19,6 +20,7 @@ namespace ThankingRust
 
         private void Start()
         {
+            StartCoroutine(LoadAssets());
             Instance = this;
         }
         
@@ -26,7 +28,7 @@ namespace ThankingRust
         {
             if (Input.GetKeyDown(KeyCode.Delete))
             {
-                InMenu = !InMenu;
+                //InMenu = !InMenu;
             }
         }
 
@@ -66,6 +68,43 @@ namespace ThankingRust
             
             GUILayout.EndVertical();
             GUI.DragWindow();
+        }
+        
+        public static Dictionary<string, Font> AssetFonts = new Dictionary<string, Font>();
+        public static Dictionary<string, Texture2D> AssetTextures = new Dictionary<string, Texture2D>();
+        public static Dictionary<string, Material> AssetMaterials = new Dictionary<string, Material>();
+        public static Dictionary<string, Shader> AssetShaders = new Dictionary<string, Shader>();
+
+        public static AssetBundle bundle;
+
+        public IEnumerator LoadAssets()
+        {
+            try
+            {
+                bundle = AssetBundle.LoadFromFile("ThankingAssets.unity3d");
+
+                foreach (Shader s in bundle.LoadAllAssets<Shader>())
+                    AssetMaterials.Add(s.name, new Material(s) { hideFlags = HideFlags.HideAndDontSave });
+
+                foreach (Shader s in bundle.LoadAllAssets<Shader>())
+                    AssetShaders.Add(s.name, s);
+
+                foreach (Font f in bundle.LoadAllAssets<Font>())
+                    AssetFonts.Add(f.name, f);
+
+                foreach (Texture2D t in bundle.LoadAllAssets<Texture2D>())
+                    if (t.name != "Font Texture")
+                        AssetTextures.Add(t.name, t);
+
+                MenuComponent._TabFont = AssetFonts["Anton-Regular"];
+                MenuComponent._TextFont = AssetFonts["CALIBRI"];
+                MenuComponent._LogoTexLarge = AssetTextures["thanking_logo_large"];
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+            }
+            yield return new WaitForEndOfFrame();
         }
     }
 }

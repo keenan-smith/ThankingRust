@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Remoting.Messaging;
@@ -17,7 +18,7 @@ namespace ThankingRust
         public static bool bPredictDrop = true;
         public static bool bForceAutomatic = false;
 
-        public static bool ShouldAim = false;
+        public static bool IsAiming = false;
         
         public static KeyCode kAimKey = KeyCode.F;
         public static float fFOV = 200f;
@@ -28,6 +29,77 @@ namespace ThankingRust
         public static BasePlayer aimPlayer;
 
         public static Vector3 playerVelocity = Vector3.zero;
+
+        private void Start()
+        {
+            StartCoroutine(SetLockedObject());
+        }
+
+        public IEnumerator SetLockedObject()
+        {
+            while(true)
+            {
+                //Debug.LogError("SetLockedObject");
+                if (!bAimbotEnabled)
+                {
+
+                    //Debug.LogError("Aimbot Not Enabled");
+                    yield return new WaitForSeconds(.1f);
+                    continue;
+                }
+
+                //Debug.LogError("Aimbot Enabled");
+                BasePlayer player = null;
+                foreach (BasePlayer basePlayer in BasePlayer.VisiblePlayerList)
+                {
+                    //Debug.LogError($"1: {basePlayer.displayName}");
+                    if (((basePlayer != null) && (basePlayer.health > 0f)) && (!basePlayer.IsSleeping() && !basePlayer.IsLocalPlayer()))
+                    {
+                       // Debug.LogError($"2: {basePlayer.displayName}");
+                        Vector3 enemyPosition;
+                        if (bAimAtHead)
+                            enemyPosition = GetBonePosition(basePlayer.GetModel(), "head");
+                        else
+                            enemyPosition = GetBonePosition(basePlayer.GetModel(), "penis");
+
+                        //Debug.LogError(basePlayer.displayName);
+
+                        Vector3 v2dist = MainCamera.mainCamera.WorldToScreenPoint(enemyPosition);
+
+                        if (v2dist.z <= 0) continue;
+
+                        //Debug.LogError($"3: {basePlayer.displayName}");
+                        Vector2 pos = new Vector2(v2dist.x, v2dist.y);
+                        float vdist = Vector2.Distance(new Vector2(Screen.width / 2, Screen.height / 2), pos);
+
+                        if (vdist < fFOV && player == null)
+                            player = basePlayer;
+
+                        else if (vdist < fFOV)
+                        {
+                            //Debug.LogError($"4: {basePlayer.displayName}");
+                            Vector3 enemyPosition_;
+                            if (bAimAtHead)
+                                enemyPosition_ = GetBonePosition(player.GetModel(), "head");
+                            else
+                                enemyPosition_ = GetBonePosition(player.GetModel(), "penis");
+
+                            Vector3 v2dist_ = MainCamera.mainCamera.WorldToScreenPoint(enemyPosition_);
+                            Vector2 pos_ = new Vector2(v2dist_.x, v2dist_.y);
+                            float vdist_ = Vector2.Distance(new Vector2(Screen.width / 2, Screen.height / 2),
+                                pos_);
+
+                            if (vdist_ > vdist)
+                                player = basePlayer;
+                        }
+                    }
+                }
+                if (!IsAiming)
+                    aimPlayer = (player == null ? null : player);
+
+                yield return new WaitForEndOfFrame();
+            }
+        }
         
         public static void NoRecoil()
         {
@@ -76,51 +148,19 @@ namespace ThankingRust
         public static Vector3 GetEnemyVector()
         {
             Vector3 result = Vector3.zero;
-            Vector2 middleScreen = new Vector2((float)(Screen.width / 2), (float)(Screen.height / 2));
-            float maxDistance = 4999f;
-            foreach (BasePlayer player in BasePlayer.VisiblePlayerList)
+            if (aimPlayer != null)
             {
-                if (((player != null) && (player.health > 0f)) && (!player.IsSleeping() && !player.IsLocalPlayer()))
-                {
-                    Vector3 enemyPosition;
-                    if (bAimAtHead)
-                        enemyPosition = GetBonePosition(player.GetModel(), "head");
-                    else
-                        enemyPosition = GetBonePosition(player.GetModel(), "penis");
+                Vector3 enemyPosition;
+                if (bAimAtHead)
+                    enemyPosition = GetBonePosition(aimPlayer.GetModel(), "head");
+                else
+                    enemyPosition = GetBonePosition(aimPlayer.GetModel(), "penis");
 
-                    if (enemyPosition != Vector3.zero)
-                    {
-                        bool flag = IsVisible(enemyPosition);
+                if (bPredictVelocity)
+                    return playerVelocity;
 
-                        if (flag)
-                        {
-                            Vector3 vector4 = MainCamera.mainCamera.WorldToScreenPoint(enemyPosition);
-                            Vector2 enemyOnScreen = new Vector2(vector4.x, Screen.height - vector4.y);                            
-                            float fov = Mathf.Abs(Vector2.Distance(middleScreen, enemyOnScreen));
-                            if ((fov <= fFOV) && (fov <= maxDistance))
-                            {
-                                if (vector4.z > 0) 
-                                {
-                                    result = enemyPosition;
-                                    aimPlayer = player;
-                                    
-                                    if (bAimAtHead)
-                                        enemyPosition = GetBonePosition(aimPlayer.GetModel(), "head");
-                                    else
-                                        enemyPosition = GetBonePosition(aimPlayer.GetModel(), "penis");
-                                    
-                                    if (bPredictVelocity)
-                                       return playerVelocity;
-
-                                    return enemyPosition;
-                                }
-                            maxDistance = fov;
-                            }
-                        }
-                    }
-                }
+                return enemyPosition;
             }
-
             return result; 
         }
 
@@ -242,38 +282,49 @@ namespace ThankingRust
 
         private void OnGUI()
         {
-            foreach (BaseNetworkable NetworkableObject in BaseNetworkable.clientEntities)
-            {
-                if (NetworkableObject is OreResourceEntity)
-                {
-                    ResourceEntity resource = NetworkableObject as OreResourceEntity;
+            //    foreach (BaseNetworkable NetworkableObject in BaseNetworkable.clientEntities)
+            //    {
+            //        if (NetworkableObject is OreResourceEntity)
+            //        {
+            //            ResourceEntity resource = NetworkableObject as OreResourceEntity;
 
-                    if (resource != null)
-                    {
-                        Vector3 vector = MainCamera.mainCamera.WorldToScreenPoint(resource.transform.position);
-                        if (vector.z > 0f)
-                        {
-                            int distance = (int)Vector3.Distance(LocalPlayer.Entity.transform.position,
-                                resource.transform.position);
-                            if (distance <= 5000)
-                            {
-                                vector.x += 3f;
-                                vector.y = Screen.height - (vector.y + 1f);
-                                Renderer.DrawString(new Vector2(vector.x, vector.y),
-                                    string.Format("{0} [{1}m]",
-                                        resource.ShortPrefabName
-                                            .Replace(".prefab", "")
-                                            .Replace("_deployed", "")
-                                        , distance),
-                                    Color.green, true, 12, true);
-                            }
-                        }
-                    }
+            //            if (resource != null)
+            //            {
+            //                Vector3 vector = MainCamera.mainCamera.WorldToScreenPoint(resource.transform.position);
+            //                if (vector.z > 0f)
+            //                {
+            //                    int distance = (int)Vector3.Distance(LocalPlayer.Entity.transform.position,
+            //                        resource.transform.position);
+            //                    if (distance <= 5000)
+            //                    {
+            //                        vector.x += 3f;
+            //                        vector.y = Screen.height - (vector.y + 1f);
+            //                        Renderer.DrawString(new Vector2(vector.x, vector.y),
+            //                            string.Format("{0} [{1}m]",
+            //                                resource.ShortPrefabName
+            //                                    .Replace(".prefab", "")
+            //                                    .Replace("_deployed", "")
+            //                                , distance),
+            //                            Color.green, true, 12, true);
+            //                    }
+            //                }
+            //            }
+            //        }
+            //    }
+            Renderer.DrawString(new Vector2(100f, 100f), (aimPlayer == null ? "Null" : aimPlayer.displayName), Color.red);
+
+            if (aimPlayer != null)
+            {
+                if (bAimbotEnabled && LocalPlayer.Entity != null && Input.GetKey(kAimKey))
+                {
+                    IsAiming = true;
+                    DoAimbot();
                 }
+                else
+                    IsAiming = false;
             }
-            
-            if (bAimbotEnabled && LocalPlayer.Entity != null && Input.GetKey(kAimKey))
-                DoAimbot();
+            else
+                IsAiming = false;
         }
     }
 }

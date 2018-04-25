@@ -165,6 +165,9 @@
     <Compile Include="Helpers.cs" />
     <Compile Include="Loading.cs" />
     <Compile Include="Main.cs" />
+    <Compile Include="Menu.cs" />
+    <Compile Include="MenuTab\AimbotTab.cs" />
+    <Compile Include="MenuTab\VisualsTab.cs" />
     <Compile Include="ObjectESP.cs" />
     <Compile Include="PlayerESP.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

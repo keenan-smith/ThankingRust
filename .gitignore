@@ -6,3 +6,7 @@ ThankingRust/\.idea/\.idea\.ThankingRust/\.idea/
 ThankingRust/\.idea/\.idea\.ThankingRust/
 
 ThankingRust/obj/Debug/
+/ThankingRust/.vs/ThankingRust/v15
+/.vs
+/ThankingRust/ThankingRust.csproj.user
+/ThankingRust/obj/Release

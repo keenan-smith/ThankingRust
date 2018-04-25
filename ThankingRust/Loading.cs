@@ -16,7 +16,9 @@ namespace ThankingRust
         {
             HookObject = new GameObject();
             HookObject.AddComponent<Main>();
+            HookObject.AddComponent<MenuComponent>();
             HookObject.AddComponent<PlayerESP>();
+            HookObject.AddComponent<ObjectESP>();
             HookObject.AddComponent<UpdateObjects>();
             HookObject.AddComponent<Aimbot>();
             UnityEngine.Object.DontDestroyOnLoad(HookObject);
@@ -24,6 +26,7 @@ namespace ThankingRust
 
         public static void Unload()
         {
+            Main.bundle.Unload(true);
             UnityEngine.Object.DestroyImmediate(HookObject);
         }
     }

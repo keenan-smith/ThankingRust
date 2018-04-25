@@ -12,6 +12,8 @@ namespace ThankingRust
         public static bool bDrawHP = true;
         public static bool bDrawEquipItem = true;
         public static bool bDrawSleepers = true;
+        public static bool bEnableChams = false;
+        public static bool bFlatChams = false;
         public static int iESPDrawDistance = 5000;
         public static Color cSleepingColor = new Color(0f, 0f, 1f);
         public static Color cDeadColor = new Color(0f, 0.588f, 0.588f);
