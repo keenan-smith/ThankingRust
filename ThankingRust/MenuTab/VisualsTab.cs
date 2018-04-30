@@ -40,6 +40,12 @@ namespace ThankingRust
                     Prefab.Toggle("Enable Resource ESP", ref ObjectESP.bDrawResources);
                     GUILayout.EndVertical();
                 });
+                Prefab.SectionTabButton("Collectibles", () =>
+                {
+                    GUILayout.BeginVertical();
+                    Prefab.Toggle("Enable Collectible ESP", ref ObjectESP.bDrawCollectibles);
+                    GUILayout.EndVertical();
+                });
                 //Prefab.SectionTabButton("Vehicles", () =>
                 //{
                 //    GUILayout.BeginHorizontal();

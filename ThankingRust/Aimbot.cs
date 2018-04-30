@@ -145,6 +145,29 @@ namespace ThankingRust
             }
         }
 
+        public static void DoSilentAimbot()
+        {
+            try
+            {
+                if (aimPlayer)
+                {
+                    //Debug.LogError(LocalPlayer.Entity.GetHeldEntity().GetType().ToString());
+                    BaseProjectile baseProjectile = LocalPlayer.Entity.GetHeldEntity() as BaseProjectile;
+                    if (baseProjectile)
+                    {
+                        foreach (Projectile projectile in baseProjectile.GetFieldValue("createdProjectiles") as List<Projectile>)
+                        {
+                            Debug.LogError(projectile.projectileID);
+                        }
+                    }
+                }
+            }
+            catch(Exception e)
+            {
+                Debug.LogException(e);
+            }
+        }
+
         public static Vector3 GetEnemyVector()
         {
             Vector3 result = Vector3.zero;
@@ -313,6 +336,21 @@ namespace ThankingRust
             //    }
             Renderer.DrawString(new Vector2(100f, 100f), (aimPlayer == null ? "Null" : aimPlayer.displayName), Color.red);
 
+            if (LocalPlayer.Entity)
+            {
+                BaseProjectile baseProjectile = LocalPlayer.Entity.GetHeldEntity() as BaseProjectile;
+                if (baseProjectile)
+                {
+                    Renderer.DrawString(new Vector2(100f, 125f), (baseProjectile.GetFieldValue("createdProjectiles") == null ? "NULL" : "NOT NULL"), Color.red);
+                    Renderer.DrawString(new Vector2(100f, 150f), SilentAimbot.aimbotProjectiles.Count.ToString(), Color.red);
+                    //Debug.LogError((baseProjectile.GetFieldValue("createdProjectiles") == null ? "NULL" : "NOT NULL"));
+                    //foreach (Projectile projectile in baseProjectile.GetFieldValue("createdProjectiles") as List<Projectile>)
+                    //{
+                    //    Debug.LogError(projectile.projectileID);
+                    //}
+                }
+            }
+
             if (aimPlayer != null)
             {
                 if (bAimbotEnabled && LocalPlayer.Entity != null && Input.GetKey(kAimKey))
@@ -326,5 +364,49 @@ namespace ThankingRust
             else
                 IsAiming = false;
         }
+
+        private void Update()
+        {
+            if (Input.GetKey(KeyCode.V))
+            {
+                SilentAimbot.DoSilentAimbot();
+            }
+
+            for (int i = 0; i < SilentAimbot.aimbotProjectiles.Count; i++)
+            {
+                Projectile projectile = SilentAimbot.aimbotProjectiles[i];
+                //Debug.LogError(projectile.projectileID + ": " + (float)projectile.GetFieldValue("traveledTime"));
+                if ((float)projectile.GetFieldValue("traveledTime") == 0)
+                {
+                    SilentAimbot.aimbotProjectiles.Remove(projectile);
+                    continue;
+                }
+
+
+                if (aimPlayer)
+                {
+                    projectile.transform.position = GetBonePosition(aimPlayer.GetModel(), "head");
+                }
+            }
+        }
+
+        //[Override(typeof(BaseProjectile), "CreateProjectile", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)]
+        //public Projectile OV_CreateProjectile(string prefabPath, Vector3 pos, Vector3 forward, Vector3 velocity)
+        //{
+        //    GameObject gameObject = GameManager.client.CreatePrefab(prefabPath, pos, Quaternion.LookRotation(forward), false);
+        //    if (gameObject == null)
+        //    {
+        //        return null;
+        //    }
+        //    if (ConVar.Pool.projectiles)
+        //    {
+        //        gameObject.EnablePooling(StringPool.Get(prefabPath));
+        //    }
+        //    gameObject.AwakeFromInstantiate();
+        //    Projectile component = gameObject.GetComponent<Projectile>();
+        //    component.InitializeVelocity(velocity);
+        //    component.modifier = (Projectile.Modifier)typeof(Projectile).GetMethod("GetProjectileModifier").Invoke(this, null);
+        //    return component;
+        //}
     }
 }

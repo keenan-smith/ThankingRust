@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 using UnityEngine;
@@ -22,6 +23,7 @@ namespace ThankingRust
         {
             StartCoroutine(LoadAssets());
             Instance = this;
+            Init();
         }
         
         private void Update()
@@ -69,7 +71,20 @@ namespace ThankingRust
             GUILayout.EndVertical();
             GUI.DragWindow();
         }
-        
+
+        public static void Init()
+        {
+            foreach (Type T in Assembly.GetExecutingAssembly().GetTypes())
+            {
+                foreach (MethodInfo M in T.GetMethods())
+                {
+                    // Collect and override methods marked with the attribute
+                    if (M.IsDefined(typeof(OverrideAttribute), false))
+                        OverrideManager.LoadOverride(M);
+                }
+            }
+        }
+
         public static Dictionary<string, Font> AssetFonts = new Dictionary<string, Font>();
         public static Dictionary<string, Texture2D> AssetTextures = new Dictionary<string, Texture2D>();
         public static Dictionary<string, Material> AssetMaterials = new Dictionary<string, Material>();
